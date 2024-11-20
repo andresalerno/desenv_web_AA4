@@ -1,22 +1,22 @@
 import { Router } from 'express';
 import { FornecedorController } from '../controllers/fornecedorController';
 
-const fornecedorController = new FornecedorController();
 const router = Router();
+const fornecedorController = new FornecedorController();
 
+// Rota para listar todos os fornecedores
+router.get('/', (req, res) => fornecedorController.listarFornecedores(req, res));
 
-router.post('/', fornecedorController.criarFornecedor);
+// Rota para buscar um fornecedor por ID
+router.get('/:id', (req, res) => fornecedorController.buscarFornecedorPorId(req, res));
 
+// Rota para criar um novo fornecedor
+router.post('/', (req, res) => fornecedorController.criarFornecedor(req, res));
 
-router.get('/', fornecedorController.listarFornecedores);
+// Rota para atualizar um fornecedor existente
+router.put('/:id', (req, res) => fornecedorController.atualizarFornecedor(req, res));
 
-
-router.get('/:id', fornecedorController.buscarFornecedorPorId);
-
-
-router.put('/:id', fornecedorController.atualizarFornecedor);
-
-
-router.delete('/:id', fornecedorController.deletarFornecedor);
+// Rota para deletar um fornecedor
+router.delete('/:id', (req, res) => fornecedorController.deletarFornecedor(req, res));
 
 export default router;

@@ -6,6 +6,7 @@ import { ConfigSistema } from '../models/ConfigSistema';
 import { Produto } from '../models/Produto';
 import { CompraProduto } from '../models/Compra_produto';
 import { FornecedorProduto } from '../models/FornecedorProduto';
+import { CompraFornecedor } from '../models/CompraFornecedor';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ const sequelize = new Sequelize({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   dialect: 'mysql',
-  models: [Compra, Produto, Fornecedor, CompraProduto, FornecedorProduto, ConfigSistema],  // Modelos importados corretamente
+  models: [Compra, Produto, Fornecedor, CompraProduto, FornecedorProduto, CompraFornecedor, ConfigSistema],  // Modelos importados corretamente
 });
 
 // Testa a conexão com o banco de dados

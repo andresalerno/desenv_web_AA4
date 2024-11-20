@@ -1,26 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const ComprasForm: React.FC = () => {
   const navigate = useNavigate();
-  const [produtosDisponiveis, setProdutosDisponiveis] = useState<any[]>([]); // Lista de produtos disponíveis
-  const [compraProdutos, setCompraProdutos] = useState<{ Prod_id: number; Quantidade: number }[]>([]); // Produtos selecionados para a compra
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState<any[]>([]);
+  const [fornecedoresDisponiveis, setFornecedoresDisponiveis] = useState<any[]>([]);
+  const [compraProdutos, setCompraProdutos] = useState<{ Prod_id: number; Quantidade: number }[]>([]);
   const [formData, setFormData] = useState({
     Compra_data: '',
+    FornecedorId: '',
   });
 
-  // Buscar produtos disponíveis
+  // Buscar produtos e fornecedores ao carregar o componente
   useEffect(() => {
-    const fetchProdutos = async () => {
+    const fetchProdutosEFornecedores = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/produtos'); // API que retorna produtos
-        setProdutosDisponiveis(response.data);
+        const produtosResponse = await fetch('http://localhost:5000/produtos');
+        const fornecedoresResponse = await fetch('http://localhost:5000/fornecedores');
+        
+        if (!produtosResponse.ok || !fornecedoresResponse.ok) {
+          throw new Error('Erro ao buscar dados');
+        }
+
+        const produtosData = await produtosResponse.json();
+        const fornecedoresData = await fornecedoresResponse.json();
+
+        console.log('Produtos:', produtosData);
+        console.log('Fornecedores:', fornecedoresData);
+
+        setProdutosDisponiveis(produtosData);
+        setFornecedoresDisponiveis(fornecedoresData);
       } catch (error) {
-        console.error('Erro ao buscar produtos:', error);
+        console.error('Erro ao buscar produtos ou fornecedores:', error);
       }
     };
-    fetchProdutos();
+
+    fetchProdutosEFornecedores();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -41,7 +56,7 @@ const ComprasForm: React.FC = () => {
   };
 
   const handleAddProduto = () => {
-    setCompraProdutos([...compraProdutos, { Prod_id: 0, Quantidade: 1 }]); // Adiciona um novo produto com valores padrão
+    setCompraProdutos([...compraProdutos, { Prod_id: 0, Quantidade: 1 }]);
   };
 
   const handleRemoveProduto = (index: number) => {
@@ -50,20 +65,36 @@ const ComprasForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+  
+    const data = {
+      Compra_data: new Date(formData.Compra_data).toISOString(),
+      Compra_total: compraProdutos.reduce((total, p) => total + p.Quantidade, 0),
+      Forn_id: formData.FornecedorId,
+      Prod_id: compraProdutos[0].Prod_id,
+      Quantidade: compraProdutos[0].Quantidade
+    };
+  
+    console.log('Dados que serão enviados:', data);
+  
     try {
-      const data = {
-        ...formData,
-        produtos: compraProdutos,
-      };
-
-      await axios.post('http://localhost:5000/compras', data);
+      const response = await fetch('http://localhost:5000/compras', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro desconhecido');
+      }
+  
       alert('Compra registrada com sucesso!');
       navigate('/compras');
-      setFormData({ Compra_data: '' });
+      setFormData({ Compra_data: '', FornecedorId: '' });
       setCompraProdutos([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao registrar compra:', error);
-      alert('Erro ao registrar compra');
+      alert(`Erro: ${error.message}`);
     }
   };
 
@@ -84,6 +115,30 @@ const ComprasForm: React.FC = () => {
               required
             />
           </div>
+
+          <div className="form-group mb-3">
+            <label htmlFor="FornecedorId" className="form-label">Fornecedor</label>
+            <select
+              className="form-control"
+              id="FornecedorId"
+              name="FornecedorId"
+              value={formData.FornecedorId}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Selecione um fornecedor</option>
+              {fornecedoresDisponiveis.length > 0 ? (
+                fornecedoresDisponiveis.map((fornecedor) => (
+                  <option key={fornecedor.Forn_id} value={fornecedor.Forn_id}>
+                    {fornecedor.Forn_nome}
+                  </option>
+                ))
+              ) : (
+                <option>Sem fornecedores cadastrados</option>
+              )}
+            </select>
+          </div>
+
           <div className="form-group mb-3">
             <h4>Produtos</h4>
             {compraProdutos.map((produto, index) => (
@@ -97,7 +152,7 @@ const ComprasForm: React.FC = () => {
                   <option value={0}>Selecione um produto</option>
                   {produtosDisponiveis.map((p) => (
                     <option key={p.Prod_id} value={p.Prod_id}>
-                      {p.Prod_nome} {/* Exibe o nome do produto */}
+                      {p.Prod_nome}
                     </option>
                   ))}
                 </select>
@@ -118,10 +173,11 @@ const ComprasForm: React.FC = () => {
                 </button>
               </div>
             ))}
-            <button type="button" className="btn btn-secondary w-100" onClick={handleAddProduto}>
+            <button type="button" className="btn btn-secondary" onClick={handleAddProduto}>
               Adicionar Produto
             </button>
           </div>
+
           <button type="submit" className="btn btn-primary w-100">Registrar Compra</button>
         </form>
       </div>

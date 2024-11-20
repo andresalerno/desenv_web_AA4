@@ -41,3 +41,15 @@ __decorate([
 exports.CompraProduto = CompraProduto = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'CompraProduto' })
 ], CompraProduto);
+// (b) Relacionamento entre Compras, Produtos e Fornecedores
+// Conceito: Uma compra pode incluir:
+// Vários produtos.
+// Produtos provenientes de múltiplos fornecedores.
+// Quantidades específicas de cada produto.
+// Solução:
+// Tabela CompraProduto: Gerencia o relacionamento entre Compra e Produto, incluindo informações adicionais, como a quantidade de cada produto.
+// Tabela CompraFornecedor: Gerencia o relacionamento entre Compra e Fornecedor, garantindo que cada compra pode ser associada a vários fornecedores.
+// Exemplo:
+// Compra 1 inclui:
+// Produto A (Fornecedor 1) – 5 unidades.
+// Produto B (Fornecedor 2) – 10 unidades.

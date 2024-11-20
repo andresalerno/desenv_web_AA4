@@ -10,7 +10,6 @@ interface Fornecedor {
 interface Produto {
   Prod_id: number;
   Prod_nome: string;
-  Prod_descricao: string;
   Prod_preco: number;
   Prod_custo: number;
   Prod_marca: string;
@@ -106,7 +105,6 @@ const ProdutoList: React.FC = () => {
               <tr>
                 <th className="bg-primary text-light">ID</th>
                 <th className="bg-primary text-light">Nome</th>
-                <th className="bg-primary text-light">Descrição</th>
                 <th className="bg-primary text-light">Preço</th>
                 <th className="bg-primary text-light">Custo</th>
                 <th className="bg-primary text-light">Marca</th>
@@ -121,7 +119,6 @@ const ProdutoList: React.FC = () => {
                 <tr key={produto.Prod_id}>
                   <td>{produto.Prod_id}</td>
                   <td>{produto.Prod_nome}</td>
-                  <td>{produto.Prod_descricao}</td>
                   <td>{produto.Prod_preco}</td>
                   <td>{produto.Prod_custo}</td>
                   <td>{produto.Prod_marca}</td>

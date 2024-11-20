@@ -16,7 +16,7 @@ const FornecedorForm: React.FC = () => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? (checked ? 'true' : 'false') : value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 

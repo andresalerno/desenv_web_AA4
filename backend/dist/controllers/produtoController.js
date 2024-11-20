@@ -12,15 +12,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProdutoController = void 0;
 const Produto_1 = require("../models/Produto");
 const Fornecedor_1 = require("../models/Fornecedor");
+const FornecedorProduto_1 = require("../models/FornecedorProduto");
 class ProdutoController {
-    // Método para listar todos os produtos
+    // Método para listar todos os produtos com seus fornecedores associados
     listarProdutos(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const produtos = yield Produto_1.Produto.findAll({
                     include: [{
                             model: Fornecedor_1.Fornecedor,
-                            as: 'fornecedor' // Alias de associação deve ser 'fornecedor'
+                            as: 'fornecedores', // Alias da associação
+                            through: { attributes: [] }, // Definindo a tabela intermediária e sem retornar seus dados
                         }]
                 });
                 return res.status(200).json(produtos);
@@ -30,7 +32,7 @@ class ProdutoController {
             }
         });
     }
-    // Método para buscar um produto por ID
+    // Método para buscar um produto por ID, incluindo fornecedores associados
     buscarProdutoPorId(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
@@ -38,7 +40,8 @@ class ProdutoController {
                 const produto = yield Produto_1.Produto.findByPk(id, {
                     include: [{
                             model: Fornecedor_1.Fornecedor,
-                            as: 'fornecedor' // Alias de associação deve ser 'fornecedor'
+                            as: 'fornecedores', // Alias da associação
+                            through: { attributes: [] }, // Definindo a tabela intermediária e sem retornar seus dados
                         }]
                 });
                 if (!produto) {
@@ -51,10 +54,12 @@ class ProdutoController {
             }
         });
     }
+    // Método para criar um novo produto e associá-lo a fornecedores
     criarProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body;
+            const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body; // fornecedores é um array de IDs
             try {
+                // Criação do novo produto
                 const novoProduto = yield Produto_1.Produto.create({
                     Prod_nome,
                     Prod_descricao,
@@ -62,8 +67,13 @@ class ProdutoController {
                     Prod_custo,
                     Prod_marca,
                     Prod_modelo,
-                    Forn_id: FornecedorId,
                 });
+                if (FornecedorId) {
+                    yield FornecedorProduto_1.FornecedorProduto.create({
+                        Prod_id: novoProduto.Prod_id,
+                        Forn_id: FornecedorId,
+                    });
+                }
                 return res.status(201).json(novoProduto);
             }
             catch (error) {
@@ -71,17 +81,17 @@ class ProdutoController {
             }
         });
     }
-    // Método para atualizar um produto existente
+    // Método para atualizar um produto existente e atualizar suas associações com fornecedores
     atualizarProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
-            const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body;
+            const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, fornecedores } = req.body;
             try {
                 const produto = yield Produto_1.Produto.findByPk(id);
                 if (!produto) {
                     return res.status(404).json({ message: 'Produto não encontrado' });
                 }
-                // Atualizando o produto
+                // Atualizando as informações do produto
                 yield produto.update({
                     Prod_nome,
                     Prod_descricao,
@@ -89,8 +99,19 @@ class ProdutoController {
                     Prod_custo,
                     Prod_marca,
                     Prod_modelo,
-                    Forn_id: FornecedorId // Atualizando a chave estrangeira
                 });
+                // Atualizando as associações com fornecedores (substituindo)
+                if (fornecedores && Array.isArray(fornecedores)) {
+                    // Remover associações antigas
+                    yield FornecedorProduto_1.FornecedorProduto.destroy({ where: { Prod_id: produto.Prod_id } });
+                    // Adicionar novas associações
+                    yield Promise.all(fornecedores.map((fornecedorId) => __awaiter(this, void 0, void 0, function* () {
+                        yield FornecedorProduto_1.FornecedorProduto.create({
+                            Prod_id: produto.Prod_id,
+                            Forn_id: fornecedorId,
+                        });
+                    })));
+                }
                 return res.status(200).json(produto);
             }
             catch (error) {
@@ -98,7 +119,7 @@ class ProdutoController {
             }
         });
     }
-    // Método para deletar um produto
+    // Método para deletar um produto e remover suas associações com fornecedores
     deletarProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
@@ -107,6 +128,9 @@ class ProdutoController {
                 if (!produto) {
                     return res.status(404).json({ message: 'Produto não encontrado' });
                 }
+                // Remover as associações de fornecedores antes de deletar o produto
+                yield FornecedorProduto_1.FornecedorProduto.destroy({ where: { Prod_id: produto.Prod_id } });
+                // Deletar o produto
                 yield produto.destroy();
                 return res.status(204).send();
             }

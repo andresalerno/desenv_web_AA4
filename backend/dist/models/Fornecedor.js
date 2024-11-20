@@ -13,6 +13,8 @@ exports.Fornecedor = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const Produto_1 = require("./Produto");
 const FornecedorProduto_1 = require("./FornecedorProduto");
+const Compras_1 = require("./Compras");
+const CompraFornecedor_1 = require("./CompraFornecedor");
 let Fornecedor = class Fornecedor extends sequelize_typescript_1.Model {
 };
 exports.Fornecedor = Fornecedor;
@@ -36,12 +38,16 @@ __decorate([
 ], Fornecedor.prototype, "Forn_cnpj", void 0);
 __decorate([
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    __metadata("design:type", Boolean)
 ], Fornecedor.prototype, "Forn_status", void 0);
 __decorate([
     (0, sequelize_typescript_1.BelongsToMany)(() => Produto_1.Produto, () => FornecedorProduto_1.FornecedorProduto),
     __metadata("design:type", Array)
 ], Fornecedor.prototype, "produtos", void 0);
+__decorate([
+    (0, sequelize_typescript_1.BelongsToMany)(() => Compras_1.Compra, () => CompraFornecedor_1.CompraFornecedor),
+    __metadata("design:type", Array)
+], Fornecedor.prototype, "compras", void 0);
 exports.Fornecedor = Fornecedor = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'Fornecedores' })
 ], Fornecedor);

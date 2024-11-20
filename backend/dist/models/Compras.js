@@ -13,6 +13,8 @@ exports.Compra = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const Produto_1 = require("./Produto");
 const Compra_produto_1 = require("./Compra_produto");
+const Fornecedor_1 = require("./Fornecedor");
+const CompraFornecedor_1 = require("./CompraFornecedor");
 let Compra = class Compra extends sequelize_typescript_1.Model {
 };
 exports.Compra = Compra;
@@ -34,6 +36,10 @@ __decorate([
     (0, sequelize_typescript_1.BelongsToMany)(() => Produto_1.Produto, () => Compra_produto_1.CompraProduto),
     __metadata("design:type", Array)
 ], Compra.prototype, "produtos", void 0);
+__decorate([
+    (0, sequelize_typescript_1.BelongsToMany)(() => Fornecedor_1.Fornecedor, () => CompraFornecedor_1.CompraFornecedor),
+    __metadata("design:type", Array)
+], Compra.prototype, "fornecedores", void 0);
 exports.Compra = Compra = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'Compras' })
 ], Compra);

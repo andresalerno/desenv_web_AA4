@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Produto = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const Fornecedor_1 = require("./Fornecedor");
+const FornecedorProduto_1 = require("./FornecedorProduto");
 let Produto = class Produto extends sequelize_typescript_1.Model {
 };
 exports.Produto = Produto;
@@ -27,6 +28,14 @@ __decorate([
 ], Produto.prototype, "Prod_nome", void 0);
 __decorate([
     sequelize_typescript_1.Column,
+    __metadata("design:type", Number)
+], Produto.prototype, "Prod_preco", void 0);
+__decorate([
+    sequelize_typescript_1.Column,
+    __metadata("design:type", Number)
+], Produto.prototype, "Prod_custo", void 0);
+__decorate([
+    sequelize_typescript_1.Column,
     __metadata("design:type", String)
 ], Produto.prototype, "Prod_marca", void 0);
 __decorate([
@@ -34,18 +43,9 @@ __decorate([
     __metadata("design:type", String)
 ], Produto.prototype, "Prod_modelo", void 0);
 __decorate([
-    sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
-], Produto.prototype, "Prod_preco", void 0);
-__decorate([
-    (0, sequelize_typescript_1.ForeignKey)(() => Fornecedor_1.Fornecedor),
-    sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
-], Produto.prototype, "Forn_id", void 0);
-__decorate([
-    (0, sequelize_typescript_1.BelongsTo)(() => Fornecedor_1.Fornecedor, { as: 'fornecedor' }),
-    __metadata("design:type", Fornecedor_1.Fornecedor)
-], Produto.prototype, "fornecedor", void 0);
+    (0, sequelize_typescript_1.BelongsToMany)(() => Fornecedor_1.Fornecedor, () => FornecedorProduto_1.FornecedorProduto),
+    __metadata("design:type", Array)
+], Produto.prototype, "fornecedores", void 0);
 exports.Produto = Produto = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'Produtos' })
 ], Produto);

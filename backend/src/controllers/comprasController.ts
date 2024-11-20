@@ -3,122 +3,110 @@ import { Compra } from '../models/Compras';
 import { Produto } from '../models/Produto';
 import { CompraProduto } from '../models/Compra_produto';
 import { Fornecedor } from '../models/Fornecedor';
+import { CompraFornecedor } from '../models/CompraFornecedor';
 
 export class CompraController {
+
+  // Método para listar todas as compras com seus produtos e fornecedores associados
   public async listarCompras(req: Request, res: Response): Promise<Response> {
     try {
       const compras = await Compra.findAll({
         include: [
           {
-            model: CompraProduto,
-            include: [
-              {
-                model: Produto,
-                include: [
-                  {
-                    model: Fornecedor,
-                    attributes: ['Forn_id', 'Forn_nome'],
-                  },
-                ],
-              },
-            ],
+            model: Produto,
+            as: 'produtos', // Alias da associação
+            through: { attributes: ['Quantidade'] }, // Atribui a quantidade na tabela intermediária
           },
-        ],
+          {
+            model: Fornecedor,
+            as: 'fornecedores', // Alias de associação com fornecedores
+            through: { attributes: [] }, // Ignora a tabela intermediária
+          }
+        ]
       });
-  
-      // Formatar a resposta para incluir informações de fornecedor de forma mais fácil
-      const comprasComFornecedores = compras.map((compra) => {
-        return {
-          ...compra.toJSON(),
-          fornecedores: compra.produtos.map((produto: any) => produto.Fornecedor?.Forn_nome),
-        };
-      });
-  
-      return res.status(200).json(comprasComFornecedores);
+      return res.status(200).json(compras);
     } catch (error) {
-      console.error('Erro ao listar compras:', error);
       return res.status(500).json({ message: 'Erro ao listar compras', error });
     }
   }
-  
 
+  // Método para buscar uma compra por ID, incluindo produtos e fornecedores associados
   public async buscarCompraPorId(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     try {
       const compra = await Compra.findByPk(id, {
         include: [
           {
-            model: CompraProduto,
-            include: [
-              {
-                model: Produto,
-                include: [
-                  {
-                    model: Fornecedor,
-                    attributes: ['Forn_id', 'Forn_nome'],
-                  },
-                ],
-              },
-            ],
+            model: Produto,
+            as: 'produtos', // Alias da associação
+            through: { attributes: ['Quantidade'] }, // Atribui a quantidade na tabela intermediária
           },
-        ],
+          {
+            model: Fornecedor,
+            as: 'fornecedores', // Alias de associação com fornecedores
+            through: { attributes: [] }, // Ignora a tabela intermediária
+          }
+        ]
       });
-  
+
       if (!compra) {
         return res.status(404).json({ message: 'Compra não encontrada' });
       }
-  
-      // Formatar a resposta para incluir fornecedores
-      const compraComFornecedores = {
-        ...compra.toJSON(),
-        fornecedores: compra.produtos.map((produto: any) => produto.Fornecedor?.Forn_nome),
-      };
-  
-      return res.status(200).json(compraComFornecedores);
+
+      return res.status(200).json(compra);
     } catch (error) {
-      console.error('Erro ao buscar compra:', error);
       return res.status(500).json({ message: 'Erro ao buscar compra', error });
     }
   }
-  
 
   public async criarCompra(req: Request, res: Response): Promise<Response> {
-    const { Compra_data, produtos } = req.body;
-    if (!produtos || produtos.length === 0) {
-      return res.status(400).json({ message: 'Produtos devem ser fornecidos' });
-    }
+    const { Prod_id, Forn_id, Quantidade, Compra_data, Compra_total } = req.body;
+    console.log(req.body);
     try {
-      const novaCompra = await Compra.create({ Compra_data, Compra_total: 0 });
-
-      const produtosIds = produtos.map((p) => p.Prod_id);
-      const produtosEncontrados = await Produto.findAll({ where: { Prod_id: produtosIds } });
-
-      let totalCompra = 0;
-      for (const { Prod_id, Quantidade } of produtos) {
-        const produto = produtosEncontrados.find((p) => p.Prod_id === Prod_id);
-        if (!produto) {
-          return res.status(404).json({ message: `Produto com ID ${Prod_id} não encontrado` });
-        }
-
-        await novaCompra.$add('produtos', Prod_id, { through: { Quantidade } });
-        totalCompra += produto.Prod_preco * Quantidade;
+      // Buscar o produto pelo nome
+      const produto = await Produto.findOne({ where: { Prod_id: Prod_id } });
+      if (!produto) {
+        return res.status(400).json({ message: `Produto ${Prod_id} não encontrado.` });
       }
-
-      await novaCompra.update({ Compra_total: totalCompra });
+  
+      // Buscar o fornecedor pelo nome
+      const fornecedor = await Fornecedor.findOne({ where: { Forn_id: Forn_id } });
+      if (!fornecedor) {
+        return res.status(400).json({ message: `Fornecedor ${Forn_id} não encontrado.` });
+      }
+  
+      
+      const novaCompra = await Compra.create({
+        Compra_data,
+        Compra_total,
+      });
+  
+      // Criar associação com Produto e registrar a quantidade na tabela intermediária
+      await CompraProduto.create({
+        Compra_id: novaCompra.Compra_id,
+        Prod_id: produto.Prod_id,
+        Quantidade,
+      });
+  
+      // Criar associação com Fornecedor
+      await CompraFornecedor.create({
+        Compra_id: novaCompra.Compra_id,
+        Forn_id: fornecedor.Forn_id,
+      });
+  
       return res.status(201).json(novaCompra);
     } catch (error) {
       console.error('Erro ao criar compra:', error);
-      return res.status(500).json({ message: 'Erro ao criar compra', error });
+      return res.status(500).json({ message: 'Erro ao registrar a compra', error });
     }
   }
+  
+  
 
+  // Método para atualizar uma compra existente e suas associações com produtos e fornecedores
   public async atualizarCompra(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
-    const { Compra_data, produtos } = req.body;
-
-    if (!produtos || produtos.length === 0) {
-      return res.status(400).json({ message: 'Produtos devem ser fornecidos' });
-    }
+    const { Compra_data, Compra_total, produtos, fornecedores } = req.body;
 
     try {
       const compra = await Compra.findByPk(id);
@@ -126,31 +114,52 @@ export class CompraController {
         return res.status(404).json({ message: 'Compra não encontrada' });
       }
 
-      await compra.update({ Compra_data });
+      // Atualizando a compra
+      await compra.update({
+        Compra_data,
+        Compra_total,
+      });
 
-      const produtosIds = produtos.map((p) => p.Prod_id);
-      const produtosEncontrados = await Produto.findAll({ where: { Prod_id: produtosIds } });
+      // Atualizando associações de produtos (removendo as antigas e adicionando as novas)
+      if (produtos && Array.isArray(produtos)) {
+        // Removendo associações de produtos anteriores
+        await CompraProduto.destroy({ where: { Compra_id: compra.Compra_id } });
 
-      let totalCompra = 0;
-      await compra.$set('produtos', []);
-      for (const { Prod_id, Quantidade } of produtos) {
-        const produto = produtosEncontrados.find((p) => p.Prod_id === Prod_id);
-        if (!produto) {
-          return res.status(404).json({ message: `Produto com ID ${Prod_id} não encontrado` });
-        }
-
-        await compra.$add('produtos', Prod_id, { through: { Quantidade } });
-        totalCompra += produto.Prod_preco * Quantidade;
+        // Adicionando novas associações de produtos
+        await Promise.all(
+          produtos.map(async (produto: { id: number, quantidade: number }) => {
+            await CompraProduto.create({
+              Compra_id: compra.Compra_id,
+              Prod_id: produto.id,
+              Quantidade: produto.quantidade,
+            });
+          })
+        );
       }
 
-      await compra.update({ Compra_total: totalCompra });
+      // Atualizando associações de fornecedores (removendo as antigas e adicionando as novas)
+      if (fornecedores && Array.isArray(fornecedores)) {
+        // Removendo associações de fornecedores anteriores
+        await CompraFornecedor.destroy({ where: { Compra_id: compra.Compra_id } });
+
+        // Adicionando novas associações de fornecedores
+        await Promise.all(
+          fornecedores.map(async (fornecedorId: number) => {
+            await CompraFornecedor.create({
+              Compra_id: compra.Compra_id,
+              Forn_id: fornecedorId,
+            });
+          })
+        );
+      }
+
       return res.status(200).json(compra);
     } catch (error) {
-      console.error('Erro ao atualizar compra:', error);
       return res.status(500).json({ message: 'Erro ao atualizar compra', error });
     }
   }
 
+  // Método para deletar uma compra e suas associações com produtos e fornecedores
   public async deletarCompra(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     try {
@@ -158,10 +167,16 @@ export class CompraController {
       if (!compra) {
         return res.status(404).json({ message: 'Compra não encontrada' });
       }
+
+      // Remover as associações de produtos e fornecedores antes de deletar a compra
+      await CompraProduto.destroy({ where: { Compra_id: compra.Compra_id } });
+      await CompraFornecedor.destroy({ where: { Compra_id: compra.Compra_id } });
+
+      // Deletar a compra
       await compra.destroy();
+
       return res.status(204).send();
     } catch (error) {
-      console.error('Erro ao deletar compra:', error);
       return res.status(500).json({ message: 'Erro ao deletar compra', error });
     }
   }

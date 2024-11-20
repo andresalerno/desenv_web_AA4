@@ -1,13 +1,7 @@
-import {
-  Table,
-  Column,
-  Model,
-  PrimaryKey,
-  AutoIncrement,
-  BelongsTo,
-  ForeignKey,
-} from 'sequelize-typescript';
+import { Table, Column, Model, PrimaryKey, AutoIncrement, HasMany, BelongsTo, BelongsToMany } from 'sequelize-typescript';
+import { CompraProduto } from './Compra_produto';
 import { Fornecedor } from './Fornecedor';
+import { FornecedorProduto } from './FornecedorProduto';
 
 @Table({ tableName: 'Produtos' })
 export class Produto extends Model {
@@ -20,18 +14,18 @@ export class Produto extends Model {
   Prod_nome: string;
 
   @Column
+  Prod_preco: number;
+
+  @Column
+  Prod_custo: number;
+
+  @Column
   Prod_marca: string;
 
   @Column
   Prod_modelo: string;
 
-  @Column
-  Prod_preco: number;
+  @BelongsToMany(() => Fornecedor, () => FornecedorProduto)
+  fornecedores: Fornecedor[];
 
-  @ForeignKey(() => Fornecedor)
-  @Column
-  Forn_id: number;
-
-  @BelongsTo(() => Fornecedor, { as: 'fornecedor' })
-  fornecedor: Fornecedor;
 }

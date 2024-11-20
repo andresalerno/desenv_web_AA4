@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import Select from 'react-select'; // Importa o React-Select
+import Select from 'react-select';
 
 const ProdutoForm: React.FC = () => {
   const navigate = useNavigate();
@@ -15,16 +15,16 @@ const ProdutoForm: React.FC = () => {
     FornecedorId: 0, // Armazena apenas um fornecedor
   });
 
-  const [fornecedores, setFornecedores] = useState<{ value: number; label: string }[]>([]); // Lista de fornecedores
+  const [fornecedores, setFornecedores] = useState<{ value: number; label: string }[]>([]);
 
   useEffect(() => {
     const fetchFornecedores = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/fornecedores');
+        const response = await axios.get('http://localhost:5000/fornecedores');
         if (Array.isArray(response.data)) {
           const fornecedorOptions = response.data.map((fornecedor: any) => ({
-            value: fornecedor.Forn_id || 0, // Usando Forn_id como o valor da chave
-            label: fornecedor.Forn_nome || 'Desconhecido',
+            value: fornecedor.Forn_id || 0,
+            label: fornecedor.Forn_nome,
           }));
           setFornecedores(fornecedorOptions);
         }
@@ -45,30 +45,26 @@ const ProdutoForm: React.FC = () => {
   };
 
   const handleFornecedorChange = (selectedOption: any) => {
-    if (selectedOption) {
-      setFormData((prevState) => ({
-        ...prevState,
-        FornecedorId: selectedOption.value, // Atualiza o ID do fornecedor selecionado
-      }));
-    } else {
-      setFormData((prevState) => ({
-        ...prevState,
-        FornecedorId: 0, // Reseta o fornecedor selecionado
-      }));
-    }
+    setFormData((prevState) => ({
+      ...prevState,
+      FornecedorId: selectedOption ? selectedOption.value : 0,
+    }));
   };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Dados enviados:', formData); // Verificar aqui
     try {
-      const response = await axios.post('http://localhost:3000/produtos', formData);
+      const response = await axios.post('http://localhost:5000/produtos', formData);
       alert('Produto salvo com sucesso!');
-      navigate('/produtos'); // Redireciona para a página de lista de produtos
+      navigate('/produtos');
     } catch (error) {
       console.error('Erro ao salvar produto:', error);
       alert('Erro ao salvar produto');
     }
   };
+  
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
@@ -141,10 +137,11 @@ const ProdutoForm: React.FC = () => {
             <label htmlFor="FornecedorId" className="form-label">Fornecedor</label>
             <Select
               id="FornecedorId"
-              options={fornecedores} // As opções de fornecedores
-              onChange={handleFornecedorChange} // Manipula a mudança de seleção
-              value={fornecedores.find(fornecedor => fornecedor.value === formData.FornecedorId)} // Filtra o fornecedor selecionado
+              options={fornecedores}
+              onChange={handleFornecedorChange} // Atualiza o FornecedorId
+              value={fornecedores.find(fornecedor => fornecedor.value === formData.FornecedorId)} // Preenche com o fornecedor selecionado
             />
+
           </div>
           <button type="submit" className="btn btn-primary w-100">Salvar</button>
         </form>

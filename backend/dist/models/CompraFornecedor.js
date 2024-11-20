@@ -9,29 +9,31 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FornecedorProduto = void 0;
+exports.CompraFornecedor = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
-const Produto_1 = require("./Produto");
+const Compras_1 = require("./Compras");
 const Fornecedor_1 = require("./Fornecedor");
-let FornecedorProduto = class FornecedorProduto extends sequelize_typescript_1.Model {
+let CompraFornecedor = class CompraFornecedor extends sequelize_typescript_1.Model {
 };
-exports.FornecedorProduto = FornecedorProduto;
+exports.CompraFornecedor = CompraFornecedor;
 __decorate([
-    (0, sequelize_typescript_1.ForeignKey)(() => Produto_1.Produto),
+    (0, sequelize_typescript_1.ForeignKey)(() => Compras_1.Compra),
     sequelize_typescript_1.Column,
     __metadata("design:type", Number)
-], FornecedorProduto.prototype, "Prod_id", void 0);
+], CompraFornecedor.prototype, "Compra_id", void 0);
 __decorate([
     (0, sequelize_typescript_1.ForeignKey)(() => Fornecedor_1.Fornecedor),
     sequelize_typescript_1.Column,
     __metadata("design:type", Number)
-], FornecedorProduto.prototype, "Forn_id", void 0);
-exports.FornecedorProduto = FornecedorProduto = __decorate([
-    (0, sequelize_typescript_1.Table)({ tableName: 'FornecedorProduto' })
-], FornecedorProduto);
-// (a) Relacionamento entre Fornecedores e Produtos
-// Conceito: Cada fornecedor pode oferecer vários produtos, e cada produto pode ser fornecido por vários fornecedores.
-// Solução: Criamos a tabela intermediária FornecedorProduto para gerenciar o relacionamento many-to-many entre Fornecedor e Produto.
-// Exemplo:
-// Fornecedor 1 fornece Produto A e Produto B.
-// Produto A é fornecido por Fornecedor 1 e Fornecedor 2.
+], CompraFornecedor.prototype, "Forn_id", void 0);
+__decorate([
+    (0, sequelize_typescript_1.BelongsTo)(() => Compras_1.Compra),
+    __metadata("design:type", Compras_1.Compra)
+], CompraFornecedor.prototype, "compra", void 0);
+__decorate([
+    (0, sequelize_typescript_1.BelongsTo)(() => Fornecedor_1.Fornecedor),
+    __metadata("design:type", Fornecedor_1.Fornecedor)
+], CompraFornecedor.prototype, "fornecedor", void 0);
+exports.CompraFornecedor = CompraFornecedor = __decorate([
+    (0, sequelize_typescript_1.Table)({ tableName: 'CompraFornecedor' })
+], CompraFornecedor);
