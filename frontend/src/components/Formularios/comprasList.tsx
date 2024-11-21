@@ -10,16 +10,14 @@ interface Produto {
   [key: string]: any;
 }
 
-
 interface Compra {
   Compra_id: number;
   Compra_total: number;
   Compra_data: string | null;
   Forn_id?: string;
   produtos: Produto[];
+  fornecedores: Fornecedor[];
 }
-
-
 
 interface Fornecedor {
   Forn_id: string;
@@ -33,19 +31,21 @@ const ComprasList: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentCompra, setCurrentCompra] = useState<Compra | null>(null);
 
+  const fetchCompras = async () => {
+    try {
+      const response = await axios.get<Compra[]>('http://localhost:5000/compras');
+      setCompras(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar compras:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   // Buscar lista de compras
   useEffect(() => {
-    const fetchCompras = async () => {
-      try {
-        const response = await axios.get<Compra[]>('http://localhost:5000/compras');
-        setCompras(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar compras:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    
     fetchCompras();
+    console.log();
   }, []);
 
   // Buscar lista de fornecedores
@@ -82,6 +82,7 @@ const ComprasList: React.FC = () => {
         );
         alert('Compra atualizada com sucesso!');
         setShowEditModal(false);
+        fetchCompras();
       } catch (error) {
         console.error('Erro ao atualizar compra:', error);
         alert('Erro ao atualizar compra');
@@ -105,36 +106,27 @@ const ComprasList: React.FC = () => {
   const formatarMoeda = (valor: number | string) => {
     return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
   };
-  
 
   const getFornecedorNome = (
     produtos: Produto[],
     fornecedores: Fornecedor[]
   ) => {
     if (!produtos || produtos.length === 0) return 'Fornecedor não encontrado';
-  
+
     // Encontrar o primeiro produto com Forn_id não nulo
     const produtoComFornecedor = produtos.find((produto) => produto.Forn_id);
-  
+
     if (!produtoComFornecedor || !produtoComFornecedor.Forn_id) {
       return 'Fornecedor não encontrado';
     }
-  
+
     // Encontrar o fornecedor pelo Forn_id
     const fornecedor = fornecedores.find(
       (forn) => forn.Forn_id === produtoComFornecedor.Forn_id
     );
-  
+
     return fornecedor ? fornecedor.Forn_nome : 'Fornecedor não encontrado';
   };
-  
-  
-  
-  
-  
-  
-  
-  
 
   return (
     <div className="container mt-5">
@@ -165,7 +157,9 @@ const ComprasList: React.FC = () => {
                       ? new Date(compra.Compra_data).toLocaleDateString()
                       : 'Data não disponível'}
                   </td>
-                  <td>{getFornecedorNome(compra.produtos, fornecedores)}</td>
+                  <td>{compra.fornecedores.length > 0
+                      ? compra.fornecedores[0]!.Forn_nome:
+                      'Fornecedor não localizado'}</td>
                   <td className="text-center">
                     <button
                       onClick={() => handleEditClick(compra)}
@@ -206,7 +200,6 @@ const ComprasList: React.FC = () => {
                   onChange={(e) =>
                     setCurrentCompra({ ...currentCompra, Compra_total: Number(e.target.value) })
                   }
-                  
                   className="form-control"
                 />
               </div>
@@ -233,14 +226,14 @@ const ComprasList: React.FC = () => {
                   name="Forn_id"
                   value={currentCompra.Forn_id ?? ''} // Garante que o valor seja uma string
                   onChange={(e) =>
-                  setCurrentCompra({ ...currentCompra, Forn_id: e.target.value })
+                    setCurrentCompra({ ...currentCompra, Forn_id: e.target.value })
                   }
                 >
                   <option value="">Selecione o fornecedor</option>
                   {fornecedores.map((fornecedor) => (
                     <option key={fornecedor.Forn_id} value={fornecedor.Forn_id}>
-                    {fornecedor.Forn_nome}
-                  </option>
+                      {fornecedor.Forn_nome}
+                    </option>
                   ))}
                 </select>
               </div>

@@ -1,141 +1,101 @@
 import { Request, Response } from 'express';
-import { CompraProduto } from '../models/Compra_produto';
+import { CompraProduto } from '../models/CompraProduto';
 import { Compra } from '../models/Compras';
 import { Produto } from '../models/Produto';
 
 export class CompraProdutoController {
-
-  private includeCompraProduto() {
-    return [
-      {
-        model: Compra,
-        as: 'compra',
-      },
-      {
-        model: Produto,
-        as: 'produto',
-      }
-    ];
-  }
-
+  // Listar todas as associações de CompraProduto
   public async listarCompraProdutos(req: Request, res: Response): Promise<Response> {
     try {
       const compraProdutos = await CompraProduto.findAll({
-        include: this.includeCompraProduto(),
+        include: [Compra, Produto],
       });
       return res.status(200).json(compraProdutos);
     } catch (error) {
-      console.error('Erro ao listar compras de produtos:', error);
-      return res.status(500).json({ message: 'Erro ao listar compras de produtos', error });
+      console.error('Erro ao listar CompraProduto:', error);
+      return res.status(500).json({ message: 'Erro ao listar CompraProduto', error });
     }
   }
 
+  // Buscar uma associação específica por Compra_id e Prod_id
   public async buscarCompraProdutoPorId(req: Request, res: Response): Promise<Response> {
     const { compraId, produtoId } = req.params;
 
-    // Verificar se os IDs são válidos
-    if (isNaN(Number(compraId)) || isNaN(Number(produtoId))) {
-      return res.status(400).json({ message: 'IDs inválidos fornecidos' });
-    }
-
     try {
       const compraProduto = await CompraProduto.findOne({
-        where: {
-          Compra_id: compraId,
-          Prod_id: produtoId,
-        },
-        include: this.includeCompraProduto(),
+        where: { Compra_id: compraId, Prod_id: produtoId },
+        include: [Compra, Produto],
       });
 
       if (!compraProduto) {
-        return res.status(404).json({ message: 'Associação de produto e compra não encontrada' });
+        return res.status(404).json({ message: 'CompraProduto não encontrada' });
       }
 
       return res.status(200).json(compraProduto);
     } catch (error) {
-      console.error('Erro ao buscar associação de produto na compra:', error);
-      return res.status(500).json({ message: 'Erro ao buscar associação de produto na compra', error });
+      console.error('Erro ao buscar CompraProduto:', error);
+      return res.status(500).json({ message: 'Erro ao buscar CompraProduto', error });
     }
   }
 
+  // Criar uma nova associação CompraProduto
   public async criarCompraProduto(req: Request, res: Response): Promise<Response> {
     const { Compra_id, Prod_id, Quantidade } = req.body;
 
-    // Verificar se Quantidade é um número positivo
-    if (isNaN(Quantidade) || Quantidade <= 0) {
-      return res.status(400).json({ message: 'Quantidade deve ser um número positivo' });
-    }
-
     try {
-      const compra = await Compra.findByPk(Compra_id);
-      if (!compra) {
-        return res.status(400).json({ message: `Compra com ID ${Compra_id} não encontrada.` });
-      }
-
-      const produto = await Produto.findByPk(Prod_id);
-      if (!produto) {
-        return res.status(400).json({ message: `Produto com ID ${Prod_id} não encontrado.` });
-      }
-
-      const novoRegistro = await CompraProduto.create({
+      const novaCompraProduto = await CompraProduto.create({
         Compra_id,
         Prod_id,
         Quantidade,
       });
 
-      return res.status(201).json(novoRegistro);
+      return res.status(201).json(novaCompraProduto);
     } catch (error) {
-      console.error('Erro ao criar associação de produto na compra:', error);
-      return res.status(500).json({ message: 'Erro ao criar associação de produto na compra', error });
+      console.error('Erro ao criar CompraProduto:', error);
+      return res.status(500).json({ message: 'Erro ao criar CompraProduto', error });
     }
   }
 
+  // Atualizar a quantidade em CompraProduto
   public async atualizarCompraProduto(req: Request, res: Response): Promise<Response> {
     const { compraId, produtoId } = req.params;
     const { Quantidade } = req.body;
 
     try {
       const compraProduto = await CompraProduto.findOne({
-        where: {
-          Compra_id: compraId,
-          Prod_id: produtoId
-        }
+        where: { Compra_id: compraId, Prod_id: produtoId },
       });
 
       if (!compraProduto) {
-        return res.status(404).json({ message: 'Associação de produto e compra não encontrada' });
+        return res.status(404).json({ message: 'CompraProduto não encontrada' });
       }
 
       await compraProduto.update({ Quantidade });
-
       return res.status(200).json(compraProduto);
     } catch (error) {
-      console.error('Erro ao atualizar associação de produto na compra:', error);
-      return res.status(500).json({ message: 'Erro ao atualizar associação de produto na compra', error });
+      console.error('Erro ao atualizar CompraProduto:', error);
+      return res.status(500).json({ message: 'Erro ao atualizar CompraProduto', error });
     }
   }
 
+  // Deletar uma associação CompraProduto
   public async deletarCompraProduto(req: Request, res: Response): Promise<Response> {
     const { compraId, produtoId } = req.params;
 
     try {
       const compraProduto = await CompraProduto.findOne({
-        where: {
-          Compra_id: compraId,
-          Prod_id: produtoId
-        }
+        where: { Compra_id: compraId, Prod_id: produtoId },
       });
 
       if (!compraProduto) {
-        return res.status(404).json({ message: 'Associação de produto e compra não encontrada' });
+        return res.status(404).json({ message: 'CompraProduto não encontrada' });
       }
 
       await compraProduto.destroy();
-
-      return res.status(200).json({ message: 'Associação de produto e compra deletada com sucesso' });
+      return res.status(204).send();
     } catch (error) {
-      console.error('Erro ao deletar associação de produto na compra:', error);
-      return res.status(500).json({ message: 'Erro ao deletar associação de produto na compra', error });
+      console.error('Erro ao deletar CompraProduto:', error);
+      return res.status(500).json({ message: 'Erro ao deletar CompraProduto', error });
     }
   }
 }

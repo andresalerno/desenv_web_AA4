@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { Produto } from '../models/Produto';
 import { Fornecedor } from '../models/Fornecedor';
 import { FornecedorProduto } from '../models/FornecedorProduto';
+import sequelize from '../config/database';
+
+
 
 export class ProdutoController {
 
@@ -11,7 +14,7 @@ export class ProdutoController {
       const produtos = await Produto.findAll({
         include: [{
           model: Fornecedor,
-          as: 'fornecedores', // Alias da associação
+          as: 'fornecedores',
           through: { attributes: [] }, // Definindo a tabela intermediária e sem retornar seus dados
         }]
       });
@@ -45,13 +48,12 @@ export class ProdutoController {
 
   // Método para criar um novo produto e associá-lo a fornecedores
   public async criarProduto(req: Request, res: Response): Promise<Response> {
-    const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body; // fornecedores é um array de IDs
+    const { Prod_nome, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body; // fornecedores é um array de IDs
 
     try {
       // Criação do novo produto
       const novoProduto = await Produto.create({
         Prod_nome,
-        Prod_descricao,
         Prod_preco,
         Prod_custo,
         Prod_marca,
@@ -72,46 +74,70 @@ export class ProdutoController {
     }
   }
 
-  // Método para atualizar um produto existente e atualizar suas associações com fornecedores
   public async atualizarProduto(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
-    const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, fornecedores } = req.body;
-
-    try {
-      const produto = await Produto.findByPk(id);
-      if (!produto) {
-        return res.status(404).json({ message: 'Produto não encontrado' });
-      }
-
-      // Atualizando as informações do produto
-      await produto.update({
-        Prod_nome,
-        Prod_descricao,
-        Prod_preco,
-        Prod_custo,
-        Prod_marca,
-        Prod_modelo,
+    const { Prod_nome, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, fornecedores } = req.body;
+  
+    if (!Prod_nome || !Prod_preco || !fornecedores || !Array.isArray(fornecedores)) {
+      return res.status(400).json({
+        message: 'Campos obrigatórios faltando ou inválidos. Verifique o nome, preço e fornecedores.',
       });
-
-      // Atualizando as associações com fornecedores (substituindo)
-      if (fornecedores && Array.isArray(fornecedores)) {
-        // Remover associações antigas
-        await FornecedorProduto.destroy({ where: { Prod_id: produto.Prod_id } });
-
-        // Adicionar novas associações
-        await Promise.all(
-          fornecedores.map(async (fornecedorId: number) => {
-            await FornecedorProduto.create({
-              Prod_id: produto.Prod_id,
-              Forn_id: fornecedorId,
-            });
-          })
+    }
+  
+    try {
+      // Inicia uma transação para garantir atomicidade
+      const transaction = await sequelize.transaction();
+  
+      try {
+        const produto = await Produto.findByPk(id, { transaction });
+  
+        if (!produto) {
+          return res.status(404).json({ message: 'Produto não encontrado.' });
+        }
+  
+        // Atualizar as informações do produto
+        await produto.update(
+          {
+            Prod_nome,
+            Prod_preco,
+            Prod_custo,
+            Prod_marca,
+            Prod_modelo,
+          },
+          { transaction }
         );
+  
+        // Atualizar associações com fornecedores
+        await FornecedorProduto.destroy({
+          where: { Prod_id: produto.Prod_id },
+          transaction,
+        });
+  
+        const novasAssociacoes = fornecedores.map((fornecedorId: number) => ({
+          Prod_id: produto.Prod_id,
+          Forn_id: fornecedorId,
+        }));
+  
+        await FornecedorProduto.bulkCreate(novasAssociacoes, { transaction });
+  
+        // Finaliza a transação
+        await transaction.commit();
+  
+        return res.status(200).json({
+          message: 'Produto atualizado com sucesso!',
+          produto,
+        });
+      } catch (error) {
+        // Reverte a transação em caso de erro
+        await transaction.rollback();
+        throw error;
       }
-
-      return res.status(200).json(produto);
     } catch (error) {
-      return res.status(500).json({ message: 'Erro ao atualizar produto', error });
+      console.error('Erro ao atualizar produto:', error);
+      return res.status(500).json({
+        message: 'Erro interno ao atualizar produto. Tente novamente mais tarde.',
+        error: error.message,
+      });
     }
   }
 

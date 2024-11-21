@@ -10,133 +10,101 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompraProdutoController = void 0;
-const Compra_produto_1 = require("../models/Compra_produto");
+const CompraProduto_1 = require("../models/CompraProduto");
 const Compras_1 = require("../models/Compras");
 const Produto_1 = require("../models/Produto");
 class CompraProdutoController {
-    includeCompraProduto() {
-        return [
-            {
-                model: Compras_1.Compra,
-                as: 'compra',
-            },
-            {
-                model: Produto_1.Produto,
-                as: 'produto',
-            }
-        ];
-    }
+    // Listar todas as associações de CompraProduto
     listarCompraProdutos(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const compraProdutos = yield Compra_produto_1.CompraProduto.findAll({
-                    include: this.includeCompraProduto(),
+                const compraProdutos = yield CompraProduto_1.CompraProduto.findAll({
+                    include: [Compras_1.Compra, Produto_1.Produto],
                 });
                 return res.status(200).json(compraProdutos);
             }
             catch (error) {
-                console.error('Erro ao listar compras de produtos:', error);
-                return res.status(500).json({ message: 'Erro ao listar compras de produtos', error });
+                console.error('Erro ao listar CompraProduto:', error);
+                return res.status(500).json({ message: 'Erro ao listar CompraProduto', error });
             }
         });
     }
+    // Buscar uma associação específica por Compra_id e Prod_id
     buscarCompraProdutoPorId(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { compraId, produtoId } = req.params;
-            // Verificar se os IDs são válidos
-            if (isNaN(Number(compraId)) || isNaN(Number(produtoId))) {
-                return res.status(400).json({ message: 'IDs inválidos fornecidos' });
-            }
             try {
-                const compraProduto = yield Compra_produto_1.CompraProduto.findOne({
-                    where: {
-                        Compra_id: compraId,
-                        Prod_id: produtoId,
-                    },
-                    include: this.includeCompraProduto(),
+                const compraProduto = yield CompraProduto_1.CompraProduto.findOne({
+                    where: { Compra_id: compraId, Prod_id: produtoId },
+                    include: [Compras_1.Compra, Produto_1.Produto],
                 });
                 if (!compraProduto) {
-                    return res.status(404).json({ message: 'Associação de produto e compra não encontrada' });
+                    return res.status(404).json({ message: 'CompraProduto não encontrada' });
                 }
                 return res.status(200).json(compraProduto);
             }
             catch (error) {
-                console.error('Erro ao buscar associação de produto na compra:', error);
-                return res.status(500).json({ message: 'Erro ao buscar associação de produto na compra', error });
+                console.error('Erro ao buscar CompraProduto:', error);
+                return res.status(500).json({ message: 'Erro ao buscar CompraProduto', error });
             }
         });
     }
+    // Criar uma nova associação CompraProduto
     criarCompraProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { Compra_id, Prod_id, Quantidade } = req.body;
-            // Verificar se Quantidade é um número positivo
-            if (isNaN(Quantidade) || Quantidade <= 0) {
-                return res.status(400).json({ message: 'Quantidade deve ser um número positivo' });
-            }
             try {
-                const compra = yield Compras_1.Compra.findByPk(Compra_id);
-                if (!compra) {
-                    return res.status(400).json({ message: `Compra com ID ${Compra_id} não encontrada.` });
-                }
-                const produto = yield Produto_1.Produto.findByPk(Prod_id);
-                if (!produto) {
-                    return res.status(400).json({ message: `Produto com ID ${Prod_id} não encontrado.` });
-                }
-                const novoRegistro = yield Compra_produto_1.CompraProduto.create({
+                const novaCompraProduto = yield CompraProduto_1.CompraProduto.create({
                     Compra_id,
                     Prod_id,
                     Quantidade,
                 });
-                return res.status(201).json(novoRegistro);
+                return res.status(201).json(novaCompraProduto);
             }
             catch (error) {
-                console.error('Erro ao criar associação de produto na compra:', error);
-                return res.status(500).json({ message: 'Erro ao criar associação de produto na compra', error });
+                console.error('Erro ao criar CompraProduto:', error);
+                return res.status(500).json({ message: 'Erro ao criar CompraProduto', error });
             }
         });
     }
+    // Atualizar a quantidade em CompraProduto
     atualizarCompraProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { compraId, produtoId } = req.params;
             const { Quantidade } = req.body;
             try {
-                const compraProduto = yield Compra_produto_1.CompraProduto.findOne({
-                    where: {
-                        Compra_id: compraId,
-                        Prod_id: produtoId
-                    }
+                const compraProduto = yield CompraProduto_1.CompraProduto.findOne({
+                    where: { Compra_id: compraId, Prod_id: produtoId },
                 });
                 if (!compraProduto) {
-                    return res.status(404).json({ message: 'Associação de produto e compra não encontrada' });
+                    return res.status(404).json({ message: 'CompraProduto não encontrada' });
                 }
                 yield compraProduto.update({ Quantidade });
                 return res.status(200).json(compraProduto);
             }
             catch (error) {
-                console.error('Erro ao atualizar associação de produto na compra:', error);
-                return res.status(500).json({ message: 'Erro ao atualizar associação de produto na compra', error });
+                console.error('Erro ao atualizar CompraProduto:', error);
+                return res.status(500).json({ message: 'Erro ao atualizar CompraProduto', error });
             }
         });
     }
+    // Deletar uma associação CompraProduto
     deletarCompraProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { compraId, produtoId } = req.params;
             try {
-                const compraProduto = yield Compra_produto_1.CompraProduto.findOne({
-                    where: {
-                        Compra_id: compraId,
-                        Prod_id: produtoId
-                    }
+                const compraProduto = yield CompraProduto_1.CompraProduto.findOne({
+                    where: { Compra_id: compraId, Prod_id: produtoId },
                 });
                 if (!compraProduto) {
-                    return res.status(404).json({ message: 'Associação de produto e compra não encontrada' });
+                    return res.status(404).json({ message: 'CompraProduto não encontrada' });
                 }
                 yield compraProduto.destroy();
-                return res.status(200).json({ message: 'Associação de produto e compra deletada com sucesso' });
+                return res.status(204).send();
             }
             catch (error) {
-                console.error('Erro ao deletar associação de produto na compra:', error);
-                return res.status(500).json({ message: 'Erro ao deletar associação de produto na compra', error });
+                console.error('Erro ao deletar CompraProduto:', error);
+                return res.status(500).json({ message: 'Erro ao deletar CompraProduto', error });
             }
         });
     }

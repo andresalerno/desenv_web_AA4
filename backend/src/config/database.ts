@@ -4,7 +4,7 @@ import { Fornecedor } from '../models/Fornecedor';
 import { Compra } from '../models/Compras';
 import { ConfigSistema } from '../models/ConfigSistema';
 import { Produto } from '../models/Produto';
-import { CompraProduto } from '../models/Compra_produto';
+import { CompraProduto } from '../models/CompraProduto';
 import { FornecedorProduto } from '../models/FornecedorProduto';
 import { CompraFornecedor } from '../models/CompraFornecedor';
 

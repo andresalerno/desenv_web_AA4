@@ -1,6 +1,6 @@
 import { Table, Column, Model, PrimaryKey, AutoIncrement, BelongsToMany } from 'sequelize-typescript';
 import { Produto } from './Produto';
-import { CompraProduto } from './Compra_produto';
+import { CompraProduto } from './CompraProduto';
 import { Fornecedor } from './Fornecedor';
 import { CompraFornecedor } from './CompraFornecedor';
 
@@ -9,17 +9,17 @@ export class Compra extends Model {
   @PrimaryKey
   @AutoIncrement
   @Column
-  Compra_id: number;
+  Compra_id!: number;
 
   @Column
-  Compra_data: Date;
+  Compra_data!: Date;
 
   @Column
-  Compra_total: number;
+  Compra_total!: number;
 
   @BelongsToMany(() => Produto, () => CompraProduto)
-  produtos: Produto[];
+  produtos!: Produto[];
 
   @BelongsToMany(() => Fornecedor, () => CompraFornecedor)
-  fornecedores: Fornecedor[];
+  fornecedores!: Fornecedor[];
 }

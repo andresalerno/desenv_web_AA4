@@ -1,5 +1,5 @@
 import { Table, Column, Model, PrimaryKey, AutoIncrement, HasMany, BelongsTo, BelongsToMany } from 'sequelize-typescript';
-import { CompraProduto } from './Compra_produto';
+import { CompraProduto } from './CompraProduto';
 import { Fornecedor } from './Fornecedor';
 import { FornecedorProduto } from './FornecedorProduto';
 

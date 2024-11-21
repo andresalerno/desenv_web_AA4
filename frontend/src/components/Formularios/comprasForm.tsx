@@ -5,6 +5,7 @@ const ComprasForm: React.FC = () => {
   const navigate = useNavigate();
   const [produtosDisponiveis, setProdutosDisponiveis] = useState<any[]>([]);
   const [fornecedoresDisponiveis, setFornecedoresDisponiveis] = useState<any[]>([]);
+
   const [compraProdutos, setCompraProdutos] = useState<{ Prod_id: number; Quantidade: number }[]>([]);
   const [formData, setFormData] = useState({
     Compra_data: '',
@@ -42,7 +43,7 @@ const ComprasForm: React.FC = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: name === 'FornecedorId' ? Number(value) : value
     });
   };
 
@@ -66,12 +67,21 @@ const ComprasForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
+    // Calcular o valor total da compra
+    const Compra_total = compraProdutos.reduce((total, p) => {
+      const produto = produtosDisponiveis.find(prod => prod.Prod_id === p.Prod_id);
+      return produto ? total + produto.Prod_preco! * p.Quantidade : total;
+    }, 0);
+  
+    // Criar o objeto de dados para enviar
     const data = {
-      Compra_data: new Date(formData.Compra_data).toISOString(),
-      Compra_total: compraProdutos.reduce((total, p) => total + p.Quantidade, 0),
-      Forn_id: formData.FornecedorId,
-      Prod_id: compraProdutos[0].Prod_id,
-      Quantidade: compraProdutos[0].Quantidade
+      Compra_data: new Date(formData.Compra_data).toISOString(),  // Data no formato ISO
+      Compra_total, // Total da compra
+      produtos: compraProdutos.map(p => ({
+        Prod_id: p.Prod_id,
+        Quantidade: p.Quantidade,
+      })),
+      fornecedores: [formData.FornecedorId],
     };
   
     console.log('Dados que serão enviados:', data);
@@ -80,7 +90,7 @@ const ComprasForm: React.FC = () => {
       const response = await fetch('http://localhost:5000/compras', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(data), // Enviar os dados para o backend
       });
   
       if (!response.ok) {

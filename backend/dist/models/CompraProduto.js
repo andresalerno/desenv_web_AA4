@@ -9,37 +9,35 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Compra = void 0;
+exports.CompraProduto = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const Produto_1 = require("./Produto");
-const CompraProduto_1 = require("./CompraProduto");
-const Fornecedor_1 = require("./Fornecedor");
-const CompraFornecedor_1 = require("./CompraFornecedor");
-let Compra = class Compra extends sequelize_typescript_1.Model {
+const Compras_1 = require("./Compras");
+let CompraProduto = class CompraProduto extends sequelize_typescript_1.Model {
 };
-exports.Compra = Compra;
+exports.CompraProduto = CompraProduto;
 __decorate([
-    sequelize_typescript_1.PrimaryKey,
-    sequelize_typescript_1.AutoIncrement,
+    (0, sequelize_typescript_1.ForeignKey)(() => Produto_1.Produto),
     sequelize_typescript_1.Column,
     __metadata("design:type", Number)
-], Compra.prototype, "Compra_id", void 0);
+], CompraProduto.prototype, "Prod_id", void 0);
 __decorate([
+    (0, sequelize_typescript_1.ForeignKey)(() => Compras_1.Compra),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
-], Compra.prototype, "Compra_data", void 0);
+    __metadata("design:type", Number)
+], CompraProduto.prototype, "Compra_id", void 0);
 __decorate([
     sequelize_typescript_1.Column,
     __metadata("design:type", Number)
-], Compra.prototype, "Compra_total", void 0);
+], CompraProduto.prototype, "Quantidade", void 0);
 __decorate([
-    (0, sequelize_typescript_1.BelongsToMany)(() => Produto_1.Produto, () => CompraProduto_1.CompraProduto),
-    __metadata("design:type", Array)
-], Compra.prototype, "produtos", void 0);
+    (0, sequelize_typescript_1.BelongsTo)(() => Produto_1.Produto),
+    __metadata("design:type", Produto_1.Produto)
+], CompraProduto.prototype, "produto", void 0);
 __decorate([
-    (0, sequelize_typescript_1.BelongsToMany)(() => Fornecedor_1.Fornecedor, () => CompraFornecedor_1.CompraFornecedor),
-    __metadata("design:type", Array)
-], Compra.prototype, "fornecedores", void 0);
-exports.Compra = Compra = __decorate([
-    (0, sequelize_typescript_1.Table)({ tableName: 'Compras' })
-], Compra);
+    (0, sequelize_typescript_1.BelongsTo)(() => Compras_1.Compra),
+    __metadata("design:type", Compras_1.Compra)
+], CompraProduto.prototype, "compra", void 0);
+exports.CompraProduto = CompraProduto = __decorate([
+    (0, sequelize_typescript_1.Table)({ tableName: 'CompraProduto' })
+], CompraProduto);

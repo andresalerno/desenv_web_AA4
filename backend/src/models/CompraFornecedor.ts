@@ -6,15 +6,15 @@ import { Fornecedor } from './Fornecedor';
 export class CompraFornecedor extends Model {
   @ForeignKey(() => Compra)
   @Column
-  Compra_id: number;
+  Compra_id!: number;
 
   @ForeignKey(() => Fornecedor)
   @Column
-  Forn_id: number;
+  Forn_id!: number;
 
   @BelongsTo(() => Compra)
-  compra: Compra;
+  compra!: Compra;
 
   @BelongsTo(() => Fornecedor)
-  fornecedor: Fornecedor;
+  fornecedor!: Fornecedor;
 }

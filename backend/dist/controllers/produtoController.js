@@ -8,11 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProdutoController = void 0;
 const Produto_1 = require("../models/Produto");
 const Fornecedor_1 = require("../models/Fornecedor");
 const FornecedorProduto_1 = require("../models/FornecedorProduto");
+const database_1 = __importDefault(require("../config/database"));
 class ProdutoController {
     // Método para listar todos os produtos com seus fornecedores associados
     listarProdutos(req, res) {
@@ -21,7 +25,7 @@ class ProdutoController {
                 const produtos = yield Produto_1.Produto.findAll({
                     include: [{
                             model: Fornecedor_1.Fornecedor,
-                            as: 'fornecedores', // Alias da associação
+                            as: 'fornecedores',
                             through: { attributes: [] }, // Definindo a tabela intermediária e sem retornar seus dados
                         }]
                 });
@@ -57,12 +61,11 @@ class ProdutoController {
     // Método para criar um novo produto e associá-lo a fornecedores
     criarProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body; // fornecedores é um array de IDs
+            const { Prod_nome, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, FornecedorId } = req.body; // fornecedores é um array de IDs
             try {
                 // Criação do novo produto
                 const novoProduto = yield Produto_1.Produto.create({
                     Prod_nome,
-                    Prod_descricao,
                     Prod_preco,
                     Prod_custo,
                     Prod_marca,
@@ -82,41 +85,60 @@ class ProdutoController {
             }
         });
     }
-    // Método para atualizar um produto existente e atualizar suas associações com fornecedores
     atualizarProduto(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { id } = req.params;
-            const { Prod_nome, Prod_descricao, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, fornecedores } = req.body;
-            try {
-                const produto = yield Produto_1.Produto.findByPk(id);
-                if (!produto) {
-                    return res.status(404).json({ message: 'Produto não encontrado' });
-                }
-                // Atualizando as informações do produto
-                yield produto.update({
-                    Prod_nome,
-                    Prod_descricao,
-                    Prod_preco,
-                    Prod_custo,
-                    Prod_marca,
-                    Prod_modelo,
+            const { Prod_nome, Prod_preco, Prod_custo, Prod_marca, Prod_modelo, fornecedores } = req.body;
+            if (!Prod_nome || !Prod_preco || !fornecedores || !Array.isArray(fornecedores)) {
+                return res.status(400).json({
+                    message: 'Campos obrigatórios faltando ou inválidos. Verifique o nome, preço e fornecedores.',
                 });
-                // Atualizando as associações com fornecedores (substituindo)
-                if (fornecedores && Array.isArray(fornecedores)) {
-                    // Remover associações antigas
-                    yield FornecedorProduto_1.FornecedorProduto.destroy({ where: { Prod_id: produto.Prod_id } });
-                    // Adicionar novas associações
-                    yield Promise.all(fornecedores.map((fornecedorId) => __awaiter(this, void 0, void 0, function* () {
-                        yield FornecedorProduto_1.FornecedorProduto.create({
-                            Prod_id: produto.Prod_id,
-                            Forn_id: fornecedorId,
-                        });
-                    })));
+            }
+            try {
+                // Inicia uma transação para garantir atomicidade
+                const transaction = yield database_1.default.transaction();
+                try {
+                    const produto = yield Produto_1.Produto.findByPk(id, { transaction });
+                    if (!produto) {
+                        return res.status(404).json({ message: 'Produto não encontrado.' });
+                    }
+                    // Atualizar as informações do produto
+                    yield produto.update({
+                        Prod_nome,
+                        Prod_preco,
+                        Prod_custo,
+                        Prod_marca,
+                        Prod_modelo,
+                    }, { transaction });
+                    // Atualizar associações com fornecedores
+                    yield FornecedorProduto_1.FornecedorProduto.destroy({
+                        where: { Prod_id: produto.Prod_id },
+                        transaction,
+                    });
+                    const novasAssociacoes = fornecedores.map((fornecedorId) => ({
+                        Prod_id: produto.Prod_id,
+                        Forn_id: fornecedorId,
+                    }));
+                    yield FornecedorProduto_1.FornecedorProduto.bulkCreate(novasAssociacoes, { transaction });
+                    // Finaliza a transação
+                    yield transaction.commit();
+                    return res.status(200).json({
+                        message: 'Produto atualizado com sucesso!',
+                        produto,
+                    });
                 }
-                return res.status(200).json(produto);
+                catch (error) {
+                    // Reverte a transação em caso de erro
+                    yield transaction.rollback();
+                    throw error;
+                }
             }
             catch (error) {
-                return res.status(500).json({ message: 'Erro ao atualizar produto', error });
+                console.error('Erro ao atualizar produto:', error);
+                return res.status(500).json({
+                    message: 'Erro interno ao atualizar produto. Tente novamente mais tarde.',
+                    error: error.message,
+                });
             }
         });
     }

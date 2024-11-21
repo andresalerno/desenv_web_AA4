@@ -18,7 +18,7 @@ const Fornecedor_1 = require("../models/Fornecedor");
 const Compras_1 = require("../models/Compras");
 const ConfigSistema_1 = require("../models/ConfigSistema");
 const Produto_1 = require("../models/Produto");
-const Compra_produto_1 = require("../models/Compra_produto");
+const CompraProduto_1 = require("../models/CompraProduto");
 const FornecedorProduto_1 = require("../models/FornecedorProduto");
 const CompraFornecedor_1 = require("../models/CompraFornecedor");
 dotenv_1.default.config();
@@ -29,7 +29,7 @@ const sequelize = new sequelize_typescript_1.Sequelize({
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
     dialect: 'mysql',
-    models: [Compras_1.Compra, Produto_1.Produto, Fornecedor_1.Fornecedor, Compra_produto_1.CompraProduto, FornecedorProduto_1.FornecedorProduto, CompraFornecedor_1.CompraFornecedor, ConfigSistema_1.ConfigSistema], // Modelos importados corretamente
+    models: [Compras_1.Compra, Produto_1.Produto, Fornecedor_1.Fornecedor, CompraProduto_1.CompraProduto, FornecedorProduto_1.FornecedorProduto, CompraFornecedor_1.CompraFornecedor, ConfigSistema_1.ConfigSistema], // Modelos importados corretamente
 });
 // Testa a conexão com o banco de dados
 const initDbConnection = () => __awaiter(void 0, void 0, void 0, function* () {

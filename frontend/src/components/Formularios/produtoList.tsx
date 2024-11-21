@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 
 interface Fornecedor {
-  FornecedorId: number;
+  Forn_id: number;
   Forn_nome: string;
 }
 
@@ -15,7 +15,7 @@ interface Produto {
   Prod_marca: string;
   Prod_modelo: string;
   Prod_status: boolean;
-  FornecedorId: [{Forn_id: number, Forn_nome: string}];
+  fornecedores?: Fornecedor[];
 }
 
 const ProdutoList: React.FC = () => {
@@ -24,21 +24,20 @@ const ProdutoList: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [currentProduto, setCurrentProduto] = useState<Produto | null>(null);
-  const [currentFornecedor, setCurrentFornecedor] = useState<Fornecedor | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const produtosResponse = await fetch('http://localhost:5000/produtos');
         const fornecedoresResponse = await fetch('http://localhost:5000/fornecedores');
-        
+
         if (!produtosResponse.ok || !fornecedoresResponse.ok) {
           throw new Error('Erro ao buscar dados do servidor.');
         }
 
         const produtosData = await produtosResponse.json();
         const fornecedoresData = await fornecedoresResponse.json();
-        
+
         setProdutos(produtosData);
         setFornecedores(fornecedoresData);
       } catch (error) {
@@ -58,40 +57,29 @@ const ProdutoList: React.FC = () => {
   const handleEditSubmit = async () => {
     if (currentProduto) {
       try {
-        const fornecedoresIds = currentProduto.FornecedorId.map((f) => FornecedorId);
-  
         const updatedProduto = {
           ...currentProduto,
-          fornecedores: fornecedoresIds, // Envie apenas os IDs para o backend
+          fornecedores: currentProduto.fornecedores?.map((f) => f.Forn_id), // Send only the IDs of suppliers
         };
-  
-        // Atualize o produto no backend
+
         await axios.put(`http://localhost:5000/produtos/${currentProduto.Prod_id}`, updatedProduto);
-  
-        // Atualize o estado local dos produtos
+
         setProdutos((prev) =>
           prev.map((prod) =>
             prod.Prod_id === currentProduto.Prod_id
-              ? {
-                  ...prod,
-                  ...currentProduto,
-                  fornecedores: currentProduto.FornecedorId, // Retorne os fornecedores no formato original
-                }
+              ? { ...prod, ...currentProduto }
               : prod
           )
         );
-  
-        alert("Produto atualizado com sucesso!");
+
+        alert('Produto atualizado com sucesso!');
         setShowEditModal(false);
       } catch (error) {
-        console.error("Erro ao atualizar produto:", error);
-        alert("Erro ao atualizar produto");
+        console.error('Erro ao atualizar produto:', error);
+        alert('Erro ao atualizar produto');
       }
     }
   };
-  
-  
-  
 
   const handleDelete = async (id: number) => {
     try {
@@ -144,7 +132,7 @@ const ProdutoList: React.FC = () => {
                   <td>{produto.Prod_marca}</td>
                   <td>{produto.Prod_modelo}</td>
                   <td>{produto.Prod_status ? 'Ativo' : 'Inativo'}</td>
-                  <td>{produto.fornecedores?.[0]?.Forn_nome || "Sem fornecedor"}</td>
+                  <td>{produto.fornecedores?.[0]?.Forn_nome || 'Sem fornecedor'}</td>
                   <td className="text-center">
                     <button
                       onClick={() => handleEditClick(produto)}
@@ -168,70 +156,75 @@ const ProdutoList: React.FC = () => {
         </div>
       )}
 
-{/* Modal de Edição */}
-    <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-      <Modal.Header closeButton>
-        <Modal.Title>Editar Produto</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {currentProduto && (
-          <form>
-            <div className="mb-3">
-              <label className="form-label">Nome</label>
-              <input
-                type="text"
-                name="Prod_nome"
-                value={currentProduto.Prod_nome}
-                onChange={(e) => setCurrentProduto({ ...currentProduto, Prod_nome: e.target.value })}
-                className="form-control"
-              />
-            </div>
-            {/* Outros campos para informações do produto */}
-            <div className="mb-3">
-            <label className="form-label">Fornecedor</label>
-            <select
-              className="form-control"
-              value={
-                currentProduto.fornecedores && currentProduto.fornecedores.length > 0
-                  ? currentProduto.fornecedores[0].id // Use o ID
-                  : ""
-              }
-              onChange={(e) => {
-                const selectedFornecedor = fornecedores.find(
-                  (fornecedor) => FornecedorId.Forn_id === parseInt(e.target.value)
-                );
-                if (selectedFornecedor) {
-                  setCurrentProduto({
-                    ...currentProduto,
-                    FornecedorId: [
-                      { Forn_id: selectedFornecedor.Forn_id, Forn_nome: selectedFornecedor.Forn_nome },
-                    ],
-                  });
-                }
-              }}
-            >
-              <option value="" disabled>Selecione um fornecedor</option>
-              {fornecedores.map((FornecedorId) => (
-                <option key={FornecedorId.Forn_id} value={FornecedorId.Forn_id}>
-                  {FornecedorId.Forn_nome}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          </form>
-        )}
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-          Cancelar
-        </Button>
-        <Button variant="primary" onClick={handleEditSubmit}>
-          Atualizar
-        </Button>
-      </Modal.Footer>
-    </Modal>
-
+      {/* Modal de Edição */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Editar Produto</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {currentProduto && (
+            <form>
+              <div className="mb-3">
+                <label className="form-label">Nome</label>
+                <input
+                  type="text"
+                  name="Prod_nome"
+                  value={currentProduto.Prod_nome}
+                  onChange={(e) =>
+                    setCurrentProduto({ ...currentProduto, Prod_nome: e.target.value })
+                  }
+                  className="form-control"
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Fornecedor</label>
+                <select
+                  className="form-control"
+                  value={
+                    currentProduto?.fornecedores && currentProduto?.fornecedores.length > 0
+                      ? currentProduto?.fornecedores[0]?.Forn_id // Correctly use Forn_id
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const selectedFornecedorId = parseInt(e.target.value); // Parse the selected fornecedor ID
+                    const selectedFornecedor = fornecedores.find(
+                      (fornecedor) => fornecedor.Forn_id === selectedFornecedorId // Find the selected fornecedor
+                    );
+                    if (selectedFornecedor) {
+                      setCurrentProduto({
+                        ...currentProduto!,
+                        fornecedores: [
+                          {
+                            Forn_id: selectedFornecedor.Forn_id,
+                            Forn_nome: selectedFornecedor.Forn_nome,
+                          },
+                        ], // Update the fornecedores array with the selected fornecedor
+                      });
+                    }
+                  }}
+                >
+                  <option value="" disabled>
+                    Selecione um fornecedor
+                  </option>
+                  {fornecedores.map((fornecedor) => (
+                    <option key={fornecedor.Forn_id} value={fornecedor.Forn_id}>
+                      {fornecedor.Forn_nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </form>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleEditSubmit}>
+            Atualizar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
