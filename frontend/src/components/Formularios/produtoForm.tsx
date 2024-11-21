@@ -12,7 +12,7 @@ const ProdutoForm: React.FC = () => {
     Prod_custo: 0,
     Prod_marca: '',
     Prod_modelo: '',
-    FornecedorId: 0, // Armazena apenas um fornecedor
+    FornecedorId: 0,
   });
 
   const [fornecedores, setFornecedores] = useState<{ value: number; label: string }[]>([]);
@@ -54,7 +54,7 @@ const ProdutoForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Dados enviados:', formData); // Verificar aqui
+    console.log('Dados enviados:', formData);
     try {
       const response = await axios.post('http://localhost:5000/produtos', formData);
       alert('Produto salvo com sucesso!');
@@ -138,7 +138,7 @@ const ProdutoForm: React.FC = () => {
             <Select
               id="FornecedorId"
               options={fornecedores}
-              onChange={handleFornecedorChange} // Atualiza o FornecedorId
+              onChange={handleFornecedorChange}
               value={fornecedores.find(fornecedor => fornecedor.value === formData.FornecedorId)} // Preenche com o fornecedor selecionado
             />
 

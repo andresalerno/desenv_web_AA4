@@ -67,6 +67,7 @@ class ProdutoController {
                     Prod_custo,
                     Prod_marca,
                     Prod_modelo,
+                    FornecedorId
                 });
                 if (FornecedorId) {
                     yield FornecedorProduto_1.FornecedorProduto.create({

@@ -56,6 +56,7 @@ export class ProdutoController {
         Prod_custo,
         Prod_marca,
         Prod_modelo,
+        FornecedorId
       });
 
       if (FornecedorId) {
