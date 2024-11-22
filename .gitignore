@@ -36,8 +36,6 @@ Thumbs.db
 # Arquivos de testes
 coverage/
 
-# Diretórios do servidor de testes
-public/
 
 # Arquivos temporários de editores
 *.swp
